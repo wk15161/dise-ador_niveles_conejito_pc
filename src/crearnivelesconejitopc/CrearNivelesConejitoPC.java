@@ -41,6 +41,9 @@ import javax.swing.JToolBar;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+
 /**
 
 * Diseñador básico de niveles para el juego.
@@ -233,16 +236,38 @@ import javax.swing.SwingUtilities;
    barra.addSeparator(
            new Dimension(15, 0));
 
-   JButton botonExportar =
-           new JButton("Exportar Java");
+   
+   
+   JButton botonCargarJSON =
+        new JButton("Cargar Nivel");
+
+    botonCargarJSON.addActionListener(
+            e -> cargarJSON());
+
+    barra.add(botonCargarJSON);
+    
+    
+    
+    
+    
+    
+    JButton botonExportar =
+           new JButton("Exportar Nivel");
 
    botonExportar.addActionListener(
            e -> exportarJava());
 
    barra.add(botonExportar);
+    
+    
+    
+    
+   
+   
+   
 
    JButton botonMatriz =
-           new JButton("Exportar matriz");
+           new JButton("Exportar nivel (txt)");
 
    botonMatriz.addActionListener(
            e -> exportarMatriz());
@@ -931,6 +956,426 @@ import javax.swing.SwingUtilities;
   
 
   }
+  
+  
+  
+  
+  
+  
+  
+  
+  //cargar nivel
+  private void cargarJSON() {
+
+      JFileChooser chooser =
+              new JFileChooser();
+
+      chooser.setDialogTitle(
+              "Cargar nivel JSON");
+
+      int resultado =
+              chooser.showOpenDialog(this);
+
+      if (resultado != JFileChooser.APPROVE_OPTION) {
+          return;
+      }
+
+      File archivo =
+              chooser.getSelectedFile();
+
+      try {
+
+          String json =
+                  Files.readString(
+                          archivo.toPath(),
+                          StandardCharsets.UTF_8);
+
+          // =====================================================
+          // TILESET
+          // =====================================================
+
+          String tilesetTexto =
+                  extraerValorString(
+                          json,
+                          "tileset");
+
+          if (tilesetTexto == null) {
+              throw new IOException(
+                      "El JSON no contiene el campo \"tileset\".");
+          }
+
+          if ("invierno".equalsIgnoreCase(tilesetTexto)) {
+
+              tileset =
+                      gameDesign
+                              .getTileset_invierno();
+
+              comboTileset
+                      .setSelectedIndex(1);
+
+              nombreTileset =
+                      "invierno";
+
+          } else {
+
+              tileset =
+                      gameDesign
+                              .getTileset_normal();
+
+              comboTileset
+                      .setSelectedIndex(0);
+
+              nombreTileset =
+                      "normal";
+          }
+
+          // =====================================================
+          // MAPA
+          // =====================================================
+
+          String mapaTexto =
+                  extraerArrayMapa(json);
+
+          if (mapaTexto == null) {
+              throw new IOException(
+                      "El JSON no contiene el campo \"mapa\".");
+          }
+
+          mapa =
+                  convertirMapa(mapaTexto);
+
+          if (mapa == null ||
+                  mapa.length == 0 ||
+                  mapa[0].length == 0) {
+
+              throw new IOException(
+                      "El mapa está vacío.");
+          }
+
+          // =====================================================
+          // DATOS DEL NIVEL
+          // =====================================================
+
+          File archivoActual =
+                  archivo;
+
+          String nombre =
+                  archivoActual.getName();
+
+          if (nombre.toLowerCase().endsWith(".json")) {
+
+              nombre =
+                      nombre.substring(
+                              0,
+                              nombre.length() - 5);
+          }
+
+          nombreNivelActual =
+                  nombre;
+
+          numeroNivelActual = 5;
+
+          nivelExistente = false;
+
+          // =====================================================
+          // ACTUALIZAR INTERFAZ
+          // =====================================================
+
+          actualizarInterfazMapa();
+
+          labelEstado.setText(
+                  "  JSON cargado: "
+                  + archivo.getName());
+
+          JOptionPane.showMessageDialog(
+                  this,
+                  "Nivel cargado correctamente.\n\n"
+                  + "Archivo: "
+                  + archivo.getName()
+                  + "\n"
+                  + "Dimensión: "
+                  + mapa[0].length
+                  + " x "
+                  + mapa.length
+                  + "\n"
+                  + "Tileset: "
+                  + nombreTileset);
+
+      } catch (Exception e) {
+
+          mostrarError(
+                  "No se pudo cargar el JSON.",
+                  e);
+      }
+  }
+  
+  
+  
+  
+  
+    private String extraerValorString(
+        String json,
+        String nombreCampo) {
+
+        String buscado =
+                "\"" + nombreCampo + "\"";
+
+        int posicion =
+                json.indexOf(buscado);
+
+        if (posicion < 0) {
+            return null;
+        }
+
+        int dosPuntos =
+                json.indexOf(
+                        ':',
+                        posicion + buscado.length());
+
+        if (dosPuntos < 0) {
+            return null;
+        }
+
+        int comillaInicio =
+                json.indexOf(
+                        '"',
+                        dosPuntos + 1);
+
+        if (comillaInicio < 0) {
+            return null;
+        }
+
+        int comillaFin =
+                json.indexOf(
+                        '"',
+                        comillaInicio + 1);
+
+        if (comillaFin < 0) {
+            return null;
+        }
+
+        return json.substring(
+                comillaInicio + 1,
+                comillaFin);
+    }
+
+  
+    
+    
+    
+    private String extraerArrayMapa(
+            String json) {
+
+        String buscado =
+                "\"mapa\"";
+
+        int posicion =
+                json.indexOf(buscado);
+
+        if (posicion < 0) {
+            return null;
+        }
+
+        int inicio =
+                json.indexOf(
+                        '[',
+                        posicion + buscado.length());
+
+        if (inicio < 0) {
+            return null;
+        }
+
+        int nivel =
+                0;
+
+        boolean dentroString =
+                false;
+
+        for (int i = inicio;
+             i < json.length();
+             i++) {
+
+            char c =
+                    json.charAt(i);
+
+            if (c == '"') {
+                dentroString = !dentroString;
+                continue;
+            }
+
+            if (dentroString) {
+                continue;
+            }
+
+            if (c == '[') {
+                nivel++;
+            }
+
+            else if (c == ']') {
+
+                nivel--;
+
+                if (nivel == 0) {
+
+                    return json.substring(
+                            inicio,
+                            i + 1);
+                }
+            }
+        }
+
+        return null;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    private int[][] convertirMapa(String textoMapa) {
+        String contenido =
+                textoMapa.trim();
+
+        if (!contenido.startsWith("[")
+                || !contenido.endsWith("]")) {
+
+            throw new IllegalArgumentException(
+                    "Formato de mapa inválido.");
+        }
+
+        contenido =
+                contenido.substring(
+                        1,
+                        contenido.length() - 1)
+                        .trim();
+
+        if (contenido.isEmpty()) {
+            return new int[0][0];
+        }
+
+        java.util.ArrayList<int[]> filas =
+                new java.util.ArrayList<>();
+
+        int posicion = 0;
+
+        while (posicion < contenido.length()) {
+
+            while (posicion < contenido.length()
+                    && Character.isWhitespace(
+                            contenido.charAt(posicion))) {
+
+                posicion++;
+            }
+
+            if (posicion >= contenido.length()) {
+                break;
+            }
+
+            if (contenido.charAt(posicion) != '[') {
+
+                throw new IllegalArgumentException(
+                        "Se esperaba una fila del mapa.");
+            }
+
+            int inicioFila =
+                    posicion + 1;
+
+            int finFila =
+                    contenido.indexOf(
+                            ']',
+                            inicioFila);
+
+            if (finFila < 0) {
+
+                throw new IllegalArgumentException(
+                        "Fila del mapa incompleta.");
+            }
+
+            String filaTexto =
+                    contenido.substring(
+                            inicioFila,
+                            finFila);
+
+            String[] numeros =
+                    filaTexto.split(",");
+
+            int[] fila =
+                    new int[numeros.length];
+
+            for (int x = 0;
+                 x < numeros.length;
+                 x++) {
+
+                String numero =
+                        numeros[x].trim();
+
+                if (numero.isEmpty()) {
+
+                    throw new IllegalArgumentException(
+                            "Número vacío en el mapa.");
+                }
+
+                fila[x] =
+                        Integer.parseInt(numero);
+            }
+
+            filas.add(fila);
+
+            posicion =
+                    finFila + 1;
+
+            while (posicion < contenido.length()
+                    && Character.isWhitespace(
+                            contenido.charAt(posicion))) {
+
+                posicion++;
+            }
+
+            if (posicion < contenido.length()
+                    && contenido.charAt(posicion) == ',') {
+
+                posicion++;
+            }
+        }
+
+        if (filas.isEmpty()) {
+            return new int[0][0];
+        }
+
+        int columnas =
+                filas.get(0).length;
+
+        for (int y = 0;
+             y < filas.size();
+             y++) {
+
+            if (filas.get(y).length != columnas) {
+
+                throw new IllegalArgumentException(
+                        "Todas las filas del mapa deben "
+                        + "tener la misma cantidad de columnas.");
+            }
+        }
+
+        int[][] resultado =
+                new int[filas.size()][columnas];
+
+        for (int y = 0;
+             y < filas.size();
+             y++) {
+
+            resultado[y] =
+                    filas.get(y);
+        }
+
+        return resultado;
+    }
+
+  
+  
 
   // =========================================================
   // MOSTRAR CODIGO
