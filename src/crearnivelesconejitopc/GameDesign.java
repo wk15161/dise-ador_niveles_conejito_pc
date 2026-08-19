@@ -33,6 +33,7 @@ public class GameDesign {
     private BufferedImage tileset___copia;
     private BufferedImage tileset_invierno;
     private BufferedImage tileset_normal;
+    private BufferedImage tileset_acuatico;
 
     private Sprite bobby_derecha;
     private Sprite bobby_izquierda;
@@ -247,6 +248,18 @@ public class GameDesign {
         }
         return tileset_invierno;
     }
+    
+    
+    
+    public BufferedImage getTileset_acuatico() throws IOException {
+        if (tileset_acuatico == null) {
+            tipoTilesActual = 3;
+            nombreTilesActual = "tileset_acuatico.png";
+            tileset_acuatico = cargar("tileset_acuatico.png");
+        }
+        return tileset_acuatico;
+    }
+    
 
     public TiledLayer getNivel_1() throws IOException {
         if (nivel_1 == null) {

@@ -227,6 +227,7 @@ import java.nio.file.Files;
 
    comboTileset.addItem("Normal");
    comboTileset.addItem("Invierno");
+   comboTileset.addItem("Acuatico");
 
    comboTileset.addActionListener(
            e -> cambiarTileset());
@@ -548,7 +549,7 @@ import java.nio.file.Files;
            nombreTileset =
                    "normal";
 
-       } else {
+       } else if (indice == 1) {
 
            tileset =
                    gameDesign
@@ -556,6 +557,14 @@ import java.nio.file.Files;
 
            nombreTileset =
                    "invierno";
+       } else if (indice == 2) {
+
+           tileset =
+                   gameDesign
+                           .getTileset_acuatico();
+
+           nombreTileset =
+                   "acuatico";
        }
 
        tilesetPanel.repaint();
@@ -1016,7 +1025,7 @@ import java.nio.file.Files;
               nombreTileset =
                       "invierno";
 
-          } else {
+          } else if ("normal".equalsIgnoreCase(tilesetTexto)) {
 
               tileset =
                       gameDesign
@@ -1027,6 +1036,18 @@ import java.nio.file.Files;
 
               nombreTileset =
                       "normal";
+              
+          } else if ("acuatico".equalsIgnoreCase(tilesetTexto)) {
+
+              tileset =
+                      gameDesign
+                              .getTileset_acuatico();
+
+              comboTileset
+                      .setSelectedIndex(2);
+
+              nombreTileset =
+                      "acuatico";
           }
 
           // =====================================================
