@@ -239,6 +239,24 @@ import java.nio.file.Files;
 
    
    
+   
+   
+   
+   JButton botonCrearNuevoNivel =
+        new JButton("Nuevo Nivel");
+
+    botonCrearNuevoNivel.addActionListener(
+            e -> crearNuevoNivel());
+
+    barra.add(botonCrearNuevoNivel);
+   
+   
+   
+   
+   
+   
+   
+   
    JButton botonCargarJSON =
         new JButton("Cargar Nivel");
 
@@ -413,21 +431,46 @@ import java.nio.file.Files;
    herramientas.add(radioPintar);
    herramientas.add(radioBorrar);
 
-   JButton botonBorrarTodo =
+   
+   
+   
+   
+
+   /*JButton botonNuevaMatriz =
+           new JButton("Nuevo nivel");
+
+   botonNuevaMatriz.addActionListener(
+           e -> crearNuevoNivel());
+
+   herramientas.add(botonNuevaMatriz);*/
+   
+   
+   
+   
+    JButton botonCambiarTamano =
+        new JButton("Cambiar tamaño");
+
+    botonCambiarTamano.addActionListener(
+            e -> cambiarTamanoMapa());
+
+    herramientas.add(botonCambiarTamano);
+   
+   
+   
+    
+    
+    JButton botonBorrarTodo =
            new JButton("Borrar todo");
 
    botonBorrarTodo.addActionListener(
            e -> borrarTodo());
 
    herramientas.add(botonBorrarTodo);
-
-   JButton botonNuevaMatriz =
-           new JButton("Nuevo tamaño");
-
-   botonNuevaMatriz.addActionListener(
-           e -> crearNuevoNivel());
-
-   herramientas.add(botonNuevaMatriz);
+    
+    
+    
+    
+    
 
    inferior.add(
            herramientas,
@@ -462,6 +505,206 @@ import java.nio.file.Files;
   
 
   }
+  
+  
+  
+  
+  
+  
+    // =========================================================
+    // CAMBIAR TAMAÑO DEL MAPA ACTUAL
+    // =========================================================
+
+    // =========================================================
+    // CAMBIAR TAMAÑO DEL MAPA ACTUAL
+    // =========================================================
+
+    private void cambiarTamanoMapa() {
+
+        if (mapa == null ||
+            mapa.length == 0 ||
+            mapa[0].length == 0) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No hay ningún mapa cargado.",
+                    "Cambiar tamaño",
+                    JOptionPane.WARNING_MESSAGE);
+
+            return;
+        }
+
+        final int ANCHO_MINIMO = 37;
+        final int ALTO_MINIMO = 20;
+
+        int anchoActual =
+                mapa[0].length;
+
+        int altoActual =
+                mapa.length;
+
+        JSpinner ancho =
+                new JSpinner(
+                        new SpinnerNumberModel(
+                                 Math.max(anchoActual, 37),
+                                37,
+                                200,
+                                1));
+
+        JSpinner alto =
+                new JSpinner(
+                        new SpinnerNumberModel(
+                                Math.max(altoActual, 20),
+                                20,
+                                200,
+                                1));
+
+        JPanel panel =
+                new JPanel(
+                        new GridLayout(4, 2, 5, 5));
+
+        panel.add(
+                new JLabel("Ancho actual:"));
+
+        panel.add(
+                new JLabel(
+                        String.valueOf(
+                                anchoActual)));
+
+        panel.add(
+                new JLabel("Nuevo ancho:"));
+
+        panel.add(ancho);
+
+        panel.add(
+                new JLabel("Alto actual:"));
+
+        panel.add(
+                new JLabel(
+                        String.valueOf(
+                                altoActual)));
+
+        panel.add(
+                new JLabel("Nuevo alto:"));
+
+        panel.add(alto);
+
+        int resultado =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        panel,
+                        "Cambiar tamaño del mapa",
+                        JOptionPane.OK_CANCEL_OPTION);
+
+        if (resultado !=
+                JOptionPane.OK_OPTION) {
+
+            return;
+        }
+
+        int nuevoAncho =
+                (Integer) ancho.getValue();
+
+        int nuevoAlto =
+                (Integer) alto.getValue();
+
+        // =====================================================
+        // COMPROBAR TAMAÑO MÍNIMO
+        // =====================================================
+
+        if (nuevoAncho < ANCHO_MINIMO ||
+            nuevoAlto < ALTO_MINIMO) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "El tamaño mínimo del mapa es de "
+                    + ANCHO_MINIMO
+                    + " x "
+                    + ALTO_MINIMO
+                    + ".\n\n"
+                    + "Ancho mínimo: "
+                    + ANCHO_MINIMO
+                    + "\n"
+                    + "Alto mínimo: "
+                    + ALTO_MINIMO,
+                    "Tamaño no válido",
+                    JOptionPane.WARNING_MESSAGE);
+
+            return;
+        }
+
+        if (nuevoAncho == anchoActual &&
+            nuevoAlto == altoActual) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "El mapa ya tiene ese tamaño.",
+                    "Cambiar tamaño",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            return;
+        }
+
+        // =====================================================
+        // CREAR NUEVA MATRIZ
+        // =====================================================
+
+        int[][] nuevoMapa =
+                new int[nuevoAlto][nuevoAncho];
+
+        // =====================================================
+        // CONSERVAR EL CONTENIDO EXISTENTE
+        // =====================================================
+
+        int filasACopiar =
+                Math.min(
+                        altoActual,
+                        nuevoAlto);
+
+        int columnasACopiar =
+                Math.min(
+                        anchoActual,
+                        nuevoAncho);
+
+        for (int y = 0;
+             y < filasACopiar;
+             y++) {
+
+            for (int x = 0;
+                 x < columnasACopiar;
+                 x++) {
+
+                nuevoMapa[y][x] =
+                        mapa[y][x];
+            }
+        }
+
+        mapa =
+                nuevoMapa;
+
+        actualizarInterfazMapa();
+
+        labelEstado.setText(
+                "  Mapa redimensionado: "
+                + nuevoAncho
+                + " x "
+                + nuevoAlto);
+    }
+
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   // =========================================================
   // CARGAR NIVEL EXISTENTE
@@ -651,7 +894,7 @@ import java.nio.file.Files;
   // NUEVO NIVEL
   // =========================================================
 
-  private void crearNuevoNivel() {
+  private void crearNuevoNivelAnterior() {
 
   
    JSpinner ancho =
@@ -739,6 +982,157 @@ import java.nio.file.Files;
   
 
   }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  private void crearNuevoNivel() {
+
+    final int ANCHO_MINIMO = 37;
+    final int ALTO_MINIMO = 20;
+
+    JSpinner ancho =
+            new JSpinner(
+                    new SpinnerNumberModel(
+                            ANCHO_MINIMO,
+                            ANCHO_MINIMO,
+                            200,
+                            1));
+
+    JSpinner alto =
+            new JSpinner(
+                    new SpinnerNumberModel(
+                            ALTO_MINIMO,
+                            ALTO_MINIMO,
+                            200,
+                            1));
+
+    JPanel panel =
+            new JPanel(
+                    new GridLayout(3, 2, 5, 5));
+
+    panel.add(
+            new JLabel("Ancho:"));
+
+    panel.add(ancho);
+
+    panel.add(
+            new JLabel("Alto:"));
+
+    panel.add(alto);
+
+    panel.add(
+            new JLabel("Mínimo:"));
+
+    panel.add(
+            new JLabel(
+                    ANCHO_MINIMO
+                    + " x "
+                    + ALTO_MINIMO));
+
+    int resultado =
+            JOptionPane.showConfirmDialog(
+                    this,
+                    panel,
+                    "Nuevo nivel",
+                    JOptionPane.OK_CANCEL_OPTION);
+
+    if (resultado !=
+            JOptionPane.OK_OPTION) {
+
+        return;
+    }
+
+    int columnas =
+            (Integer) ancho.getValue();
+
+    int filas =
+            (Integer) alto.getValue();
+
+    // =====================================================
+    // COMPROBAR TAMAÑO MÍNIMO
+    // =====================================================
+
+    if (columnas < ANCHO_MINIMO ||
+        filas < ALTO_MINIMO) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "El tamaño mínimo del mapa es de "
+                + ANCHO_MINIMO
+                + " x "
+                + ALTO_MINIMO
+                + ".\n\n"
+                + "Ancho mínimo: "
+                + ANCHO_MINIMO
+                + "\n"
+                + "Alto mínimo: "
+                + ALTO_MINIMO,
+                "Tamaño no válido",
+                JOptionPane.WARNING_MESSAGE);
+
+        return;
+    }
+
+    // =====================================================
+    // CREAR MAPA
+    // =====================================================
+
+    mapa =
+            new int[filas][columnas];
+
+    numeroNivelActual = 5;
+
+    nombreNivelActual =
+            "Nivel nuevo";
+
+    nivelExistente = false;
+
+    try {
+
+        tileset =
+                gameDesign
+                        .getTileset_normal();
+
+        comboTileset
+                .setSelectedIndex(0);
+
+        nombreTileset =
+                "normal";
+
+    } catch (Exception e) {
+
+        mostrarError(
+                "No se pudo cargar el tileset.",
+                e);
+    }
+
+    actualizarInterfazMapa();
+
+    labelEstado.setText(
+            "  Nuevo mapa creado: "
+            + columnas
+            + " x "
+            + filas);
+}
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   // =========================================================
   // ACTUALIZAR MAPA
@@ -883,16 +1277,16 @@ import java.nio.file.Files;
        out.close();
 
        labelEstado.setText(
-               "  Matriz exportada");
+               "  Nivel exportado a txt");
 
        JOptionPane.showMessageDialog(
                this,
-               "Matriz exportada correctamente.");
+               "Nivel exportado a txt correctamente.");
 
    } catch (IOException e) {
 
        mostrarError(
-               "No se pudo guardar la matriz.",
+               "No se pudo guardar el nivel en formato txr.",
                e);
    }
   
@@ -950,11 +1344,8 @@ import java.nio.file.Files;
 
        JOptionPane.showMessageDialog(
                this,
-               "Nivel exportado correctamente.\n\n"
-               + "El archivo NO modifica "
-               + "GameDesign.java.\n"
-               + "Copia el método generado "
-               + "manualmente.");
+               "Nivel exportado correctamente.\n"
+               + "El formato del archivo es .json");
 
    } catch (IOException e) {
 
